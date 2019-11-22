@@ -88,6 +88,9 @@ def taxidcheck (idlist):
 ####################################################
 
 def proteindataset (idlist):
+####### Asking the user to input his protein of interest, while showing him is selected taxon in the printed statement
+	protchoice = input('\nPlease specify the family of Protein which you would like to analyse for the %s taxon\n' % (idlist[0])).strip().lower()
+	return protchoice
 
 
 ###############################################################################################################
@@ -95,7 +98,26 @@ def proteindataset (idlist):
 ###############################################################################################################
 
 def creatinglistfromesearch (home, moment):
-
+    def creatinglistfromesearch (home, moment):
+    ####### Creating the list of species names from output of Protein + Taxon esearch (Function 3.1)
+    	protspecies = subprocess.check_output("cat %s/Assignment2_%s/docsum.txt | xtract -pattern Organism -element Organism"    % (home, moment), shell=True)
+    	protspeciesdec = protspecies.decode("utf-8").strip()
+    	protspecieslist = re.split(r"[\n]", protspeciesdec)
+    ####### Creating the list of taxonIDS from the output of Protein + Taxon esearch (Function 3.1)
+    	protspeciestaxid = subprocess.check_output("cat %s/Assignment2_%s/docsum.txt | xtract -pattern DocumentSummary -element TaxId" % (home, moment), shell=True)
+    	protspeciestaxiddec = protspeciestaxid.decode("utf-8").strip()
+    	protspeciestaxidlist = protspeciestaxiddec.split()
+    ####### Creating the list of Protein Accession numbers from the output of Protein + Taxon esearch (Function 3.1)
+    	protspeciesaccession = subprocess.check_output("cat %s/Assignment2_%s/docsum.txt | xtract -pattern DocumentSummary -element AccessionVersion" % (home, moment), shell=True)
+    	protspeciesaccessiondec = protspeciesaccession.decode("utf-8").strip()
+    	protspeciesaccessionlist = protspeciesaccessiondec.split()
+    ####### Creating the list of Protein lengths from the output of Protein + Taxon esearch (Function 3.1)
+    	protlength = subprocess.check_output("cat %s/Assignment2_%s/docsum.txt | xtract -pattern DocumentSummary -element Slen" % (home, moment), shell=True)
+    	protlengthdec = protlength.decode("utf-8").strip()
+    	protlengthlist = protlengthdec.split()
+    ####### Converting the list of numbers from a string to integers, as stats will be performed on this collumn later, with panda dataframes
+    	protlengthlistint = list(map(int, protlengthlist))
+    	return protspecieslist, protspeciestaxidlist, protspeciesaccessionlist, protlengthlistint
 
 ####################################################################
 ####### 3.1 FUNCTION: CHECKING SEQUENCES WITH TXID AND PROT  #######
