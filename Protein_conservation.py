@@ -704,6 +704,74 @@ def creatingconsensusseq (home, moment):
 #######################################################################################################
 
 def selectingmaxseqanalysis (totalseq, home, idlist, prot, moment, df):
+####### Creates directory where fasta files selected for plotting will be stored
+	os.mkdir('%s/Assignment2_%s/fastafilesplot' % (home, moment))
+####### Creates directory where conservation plot image will be saved
+	os.mkdir('%s/Assignment2_%s/conservationplot' % (home, moment))
+####### While true loop here enables the function to repeat infinitely, allowing the user to generate as many plots as he/she wants
+	while True:
+####### If total sequences is less than 250 sequences, then user is asked to input how many sequences he would like the conservation plot to be performed on. Min 10, Max is the total number of sequences
+		if totalseq < 250:
+			while True:
+				choice = input('\n\nHow many sequences would you like to perform the conservation analysis on?\n\n\tMinimum number : 10\n\tMaximum Number : %s\n\nPlease input a number between the above listed numbers\n' % (totalseq))
+				choice = int(choice)   ################# not sure if correct
+				if choice >= 10 and choice <= totalseq:
+					break
+				else:
+					print('You did not input a valid choice, try again')
+####### If total sequences is less than 250 sequences, then user is asked to input how many sequences he would like the conservation plot to be performed on. Min 10, Max is 250
+		else:
+			while True:
+				choice = input('How many sequences would you like to perform the conservation analysis on?\n\n\tMinimum number : 10\n\tMaximum Number : 250\n\nPlease input a number between the above listed numbers\n')
+				choice = int(choice)
+				if choice >= 10 and choice <= 250:
+					break
+				else:
+					print('You did not input a valid choice, try again')
+####### If the input of the user is <= total number of sequences, or <= 250, and >= 10, then go ahead, if not loop back
+#		if (choice <= totalseq or choice <= 250) and choice >= 10:
+####### Opens the blast output file to create a list
+		acclist = []
+		with open('%s/Assignment2_%s/fastafiles/blast/blastresult.blastp.out.txt' % (home, moment), 'r') as f:
+			n = 1
+####### Splits the line and appends the element at index 1, to the list, breaks when n > choice, thus only retrieving the first x sequences the user wants to plot
+			for line in f:
+				if  n > choice:
+					break
+				acc = line.split()
+				acclist.append(acc[1])
+				n += 1
+		f.close()
+####### Creates a file, and writes all the elements from the above list into it. This file will contain all accession numbers for sequences that the user wants to plot on the conservation plot
+		with open('%s/Assignment2_%s/fastafilesplot/selectedaccessionnumbers.txt' % (home, moment), 'w') as f:
+			n = 1
+			for elem in acclist:
+				f.write('%s\n' % (elem))
+		f.close()
+####### pullseq the sequences using the accession number file generated above as the input, and pulls these accession numbers from the multiple alignment fasta file
+		subprocess.call("/localdisk/data/BPSM/Assignment2/pullseq -i '%s/Assignment2_%s/fastafiles/multialign.fasta' -n '%s/Assignment2_%s/fastafilesplot/selectedaccessionnumbers.txt' > '%s/Assignment2_%s/fastafilesplot/selectedfastas.fa'" % (home, moment, home, moment, home, moment), shell=True)
+####### plots these sequences using plotcon
+		subprocess.call("plotcon -sequence '%s/Assignment2_%s/fastafilesplot/selectedfastas.fa' -graph svg -gtitle 'Conservation plot of %s protein in %s taxonomy' -gxtitle 'Amino Acid Position' -gytitle 'Conservation' -gdirectory '%s/Assignment2_%s/conservationplot' -goutfile 'ConservationPlot' -auto Y" % (home, moment, prot, idlist[0], home, moment), shell=True)
+####### saves the image output of plotcon to the conservation plot subdirectory
+		subprocess.call("display '%s/Assignment2_%s/conservationplot/ConservationPlot.svg' &" % (home, moment), shell=True)
+####### while true again acts as an error trap, if user does not input (y or n)
+		while True:
+####### If user wants to generate another plot, since the entire function is in a while true loop, typing y will cause a loop, while typing no returns the function and ends it
+			choices = input('Would you like to generate another conservation plot, with a different number of sequences? y/n\n').strip()
+			if choices == 'y':
+				break
+			if choices == 'n':
+####### Updating the dataframe to contain only sequences that were plotted
+				selectedaccessionlist = open('%s/Assignment2_%s/fastafilesplot/selectedaccessionnumbers.txt' % (home, moment)).read().splitlines()
+				df = df[df['Prot Accession'].isin(selectedaccessionlist)]
+####### Saves the dataframe to a .txt file, so that the user will be able to open it and gain insight on which proteins were plotted, and from which species etc.
+				with open('%s/Assignment2_%s/conservationplot/PlottedProteinDataFrame.txt' % (home, moment), 'a') as f:
+					f.write('Printed below is the DataFrame of Proteins that were plotted in the Protein conservation plot:\n\n')
+					f.write(df.to_string())
+				f.close()
+				return df
+			else:
+				print('Your input was invalid, please try again')
 
 
 #######################################################
