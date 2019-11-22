@@ -59,6 +59,28 @@ def taxonid ():
 #####################################################################################
 
 def taxidcheck (idlist):
+####### If length of list is greater than 3, then it means that the Taxon esearch generated more than one output
+	if len(idlist) >  3:
+####### Asks the user to input one of the available options from the esearch output that was printed on the screen.
+		choice = input('\nYou have to be more specific, there were more than 1 result! Of the listed results, type the name of the desired output\n').strip().lower().capitalize()
+		if choice in idlist:
+			for elements in idlist:
+####### If his input matched an element from the list, it would delete the other elements from the list, keeping the specified Taxon name, and it's TaxonID
+				if elements == choice:
+					index = idlist.index(elements)
+					del idlist[:index]
+					del idlist[index + 2:]
+####### If his input was not one of the available options on the list, then loop back to start of function, asking him for his input again
+		else:
+			print('\nYou did not input one of the available choices')
+			idlist = taxidcheck(idlist)
+####### On occassion, taxonIDs get updated, this creates a list, with 3 elements, Taxon name, TaxonID new, TaxonID old. This will delete the old taxon ID from the list, keeping the updated one
+	elif len(idlist) == 3:
+		del idlist[2:]
+####### If list length is 2, this means Taxon esearch generated a single taxon, and thus script can continue without further user refinement and input
+	elif len(idlist) == 2:
+		return idlist
+	return idlist
 
 
 ####################################################
