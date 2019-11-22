@@ -684,6 +684,19 @@ def nonredundantcheckforseq (idlist, protchoice, choiceg, home, moment):
 ###############################################################################################
 
 def creatingconsensusseq (home, moment):
+####### Execution of multiple alignment using clustalo, on the most up to date fasta file [redundant or non-redundant]
+	print('\nPerforming multiple alignment...')
+	subprocess.call("clustalo -i '%s/Assignment2_%s/fastafiles/filtered.fasta' -o '%s/Assignment2_%s/fastafiles/multialign.fasta'" % (home, moment, home, moment), shell=True)
+####### Creation of consensus sequence using cons, using the multiple alignment output
+	print('\nCreating consensus Sequence...')
+	subprocess.call("cons -sequence '%s/Assignment2_%s/fastafiles/multialign.fasta' -outseq '%s/Assignment2_%s/fastafiles/consensus.fasta'" % (home, moment, home, moment), shell=True)
+####### Making of directory where blast output and blastdb will be stored
+	os.mkdir('%s/Assignment2_%s/fastafiles/blast' % (home, moment))
+####### Creation of blast database using the fasta file
+	subprocess.call("makeblastdb -dbtype 'prot' -in '%s/Assignment2_%s/fastafiles/filtered.fasta' -out '%s/Assignment2_%s/fastafiles/blast/fastadatabase'" % (home, moment, home, moment), shell=True)
+	print('\nBlasting the consensus sequence against the non-redundant database...')
+####### Blasting the consensus sequence against the newly generated blast database
+	subprocess.call("blastp -query '%s/Assignment2_%s/fastafiles/consensus.fasta' -db '%s/Assignment2_%s/fastafiles/blast/fastadatabase' -num_threads '20' -outfmt 6 -max_hsps 1 -out '%s/Assignment2_%s/fastafiles/blast/blastresult.blastp.out.txt'" % (home, moment, home, moment, home, moment), shell=True)
 
 
 #######################################################################################################
