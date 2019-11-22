@@ -291,7 +291,29 @@ def changetaxprot (idlist, protchoice, choiceg, home, df, moment):
 ##################################################################################
 
 def xstandarddeviationwarning (df):
-
+####### Gets the minimum protein length from dataframe and assigns to variable
+	min = df['Prot Length'].min()
+####### Gets the maximum protein length from dataframe and assigns to variable
+	max = df['Prot Length'].max()
+####### Calculates the mean protein length from dataframe and assigns to variable
+	mean =df['Prot Length'].mean()
+####### Calculates the standard deviation of the protein lengths from the dataframe, and assigns to variable
+	std = df['Prot Length'].std()
+	totala = 0
+	totalb = 0
+####### Prints the min, max, mean and standard deviation of the protein sequences from the esearch
+	print('\n==============================================================================================================================================')
+	print('Protein Length Statistics:\n\n\tMinimum Length:                  %s\n\tMaximum Length:                  %s\n\tMean Length:                     %.2f\n\tStandard Deviation:             %.2f' % (min, max, mean, std))
+####### IF maximum sequence length is found to be >1 standard deviation above the mean, or >1 standard deviation below the mean, then it will print this warning message
+	if max > (mean + std) or min < (mean - std):
+		print('\n----------------------------------------------------------------------------------------------------------------------------------------------')
+		print('PLEASE READ THIS SECTION:')
+		print('\nWARNING: Maximum or minimum length sequence is >1 standarad deviation away from the mean')
+		print('\nWARNING: What effect could this have on the output?')
+		print('\n\t-If this sequence is significantly longer or shorter than other sequences, it could be an anomoly. Eg.human error while uploading to the NCBIs database')
+		print('\n\t-Caution must be exercised by the user when deciding which sequences to remove. Please use the information printed below to make a wise decision')
+		print('\n==============================================================================================================================================')
+	return min, max, mean, std
 
 ##################################################################################################
 #######  4.1 FUNCTION: SHOWING HOW MANY SEQUENCES ARE X STANDARD DEVIATIONS ABOVE THE MEAN #######
