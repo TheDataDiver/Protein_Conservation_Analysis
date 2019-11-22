@@ -837,3 +837,60 @@ def motifanalysis (home, moment, df):
 ##########################################
 
 def runningallfunctions():
+####### Function to get the taxon id
+	taxonidlist, homedir = taxonid()
+####### Function to check if the taxon id generates any output, and if too many, trim it down
+	updatedtaxonidlist = taxidcheck(taxonidlist)
+####### Function to get the protein id
+	protname = proteindataset(updatedtaxonidlist)
+####### Function to display the esearch of taxon + protein output, displaying summary for user to see
+	thecheck, thespecieslist, genename, dataframe, timestamp = checkforseq(updatedtaxonidlist, protname, homedir)
+####### Function that enables user to decide if he would like to continue with the esearch or change his input
+	nprot, nidlist, ngene, firstdataframe, timestamp = changetaxprot(updatedtaxonidlist, protname, genename, homedir, dataframe, timestamp)
+####### Function that enables user to decide if he would like to remove sequences that are x standard deviations above or below the mean
+	def resetstd (timestamp):
+####### Function that prints a warning if sequences are found >1 standard deviation above/below the mean
+		minim, maxim, means, stds = xstandarddeviationwarning(firstdataframe)
+####### Function that enables user to select which number of standard deviations above the mean, would he like to remove sequences
+		newdataframe = xstandarddeviationabove (firstdataframe, minim, maxim, means, stds)
+####### Function that enables user to select which number of standard deviations below the mean, would he like to remove sequences
+		finaldataframe = xstandarddeviationbelow (newdataframe, minim, maxim, means, stds)
+####### Function that displays the updated dataframe and asks user if he would like to go ahead with the analysis on the updated dataframe
+		resetchoice1, timestamp = theupdateddataframe (finaldataframe, nidlist, nprot, homedir, timestamp)
+####### if user's choice was 1, that means he would like to update the taxon + protein input, thus re-running the entire function
+		if resetchoice1 == '1':
+			return runningallfunctions()
+####### if user's choice was 2, that means he would like to revert the dataframe back to the one prior to selecting of sequences x standard deviations above or below the mean to be removed
+		elif resetchoice1 == '2':
+			minim, maxim, means, stds, finaldataframe, resetchoice1, timestamp = resetstd(timestamp)
+		return minim, maxim, means, stds, finaldataframe, resetchoice1, timestamp
+	params = resetstd(timestamp)
+####### Function that downloads the fasta files, skips redundant sequences
+	def resetnonredundant (params):
+		minim, maxim, means, stds, finaldataframe, resetchoice1, timestamp = params
+####### Function that downloads the fasta files of the latest dataframe
+		downloadingfasta(nidlist, nprot, ngene, homedir, timestamp)
+####### Function that enables the user to specify if he/she wants to skip redundant sequences in the latest data frame
+		protdic, redundantchoice = creatingnonredundantfastafiles (finaldataframe, homedir, timestamp)
+####### Function that enables the user tos ee the updated dataframe if he/she skipped any redundant sequences, and input a choice if he/she would like to revert to a prior dataframe
+		resetchoice2, ntotalseq = nonredundantcheckforseq(nidlist, nprot, ngene, homedir, timestamp)
+####### If user choice was 1, that means  he would like to update the taxon + protein input, thus re-running the entire function
+		if resetchoice2 == '1':
+			return runningallfunctions()
+####### If user choice was 2, that means he would like to revert the dataframe back to the one prior to filtering for redundancies
+		elif resetchoice2 == '2':
+			protdic, redundantchoice, resetchoice2, ntotalseq, finaldataframe = resetnonredundant(params)
+####### if user's choice was 3, that means he would like to revert the dataframe back to the one prior to selecting of sequences x standard deviations above or below the mean to be removed
+		elif resetchoice2 == '3':
+			minim, maxim, means, stds, finaldataframe, resetchoice1, timestamp = resetstd(timestamp)
+			protdic, redundantchoice, resetchoice2, ntotalseq, finaldataframe = resetnonredundant(params)
+		return protdic, redundantchoice, resetchoice2, ntotalseq, finaldataframe
+	protdic, redundantchoice, resetchoice2, ntotalseq, finaldataframe = resetnonredundant(params)
+####### Function that creates the consensus sequences
+	creatingconsensusseq(homedir, timestamp)
+####### Function that enables the user to select the number of sequences that are to be plotted, and generates a conservation plot based on that
+	plotteddataframe = selectingmaxseqanalysis(ntotalseq, homedir, nidlist, nprot, timestamp, finaldataframe)
+	motifanalysis(homedir, timestamp, plotteddataframe)
+
+
+runningallfunctions()
