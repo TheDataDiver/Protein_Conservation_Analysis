@@ -231,7 +231,60 @@ def checkforseq (idlist, protchoice, home):
 #############################################################################
 
 def changetaxprot (idlist, protchoice, choiceg, home, df, moment):
-
+####### While True loop acts as an error trap, if user does not input one of the available options (y or n)
+	while True:
+		finalanswer = input('\nWould you like to proceed with the analyis based on the above information? y/n\n').strip().lower()
+####### Creating the list of available options for if the user wants to change his esearch input
+		changelist = ['1', '2', '3']
+		print('\n\n')
+####### If finalanswer == 'y', then this ends the function, as this means the user is happy with the esearch output, and his input parameters
+		if finalanswer == 'y':
+			return protchoice, idlist, choiceg, df, moment
+####### If final answer == 'n', then user will be asked which esearch input he would like to change
+		elif finalanswer == 'n':
+####### If user selected earlier that he wanted to perform an esearch with additional gene name parameter, this will print his current esearch input (Taxon + protein + gene name)
+			if choiceg:
+				print('\n====================================================================================')
+				print('This is your current search parameters:\n\n1: [Taxon] %-25s [TaxonID] %-10s\n2: [Protein] %s\n3: [Gene name] %s' % (idlist[0], idlist[1], protchoice, choiceg))
+				print('====================================================================================\n')
+				tochange = input('\nWhich of the above would you like to change?\nType 1 for taxon,\nType 2 for Protein+ Gene(optional),\nType 3 for Taxon + Protein + Gene(optional).\n').strip()
+####### If user did not select that he wanted to perform an esearch with additional gene name parameter, this will print his current esearch input (Taxon + protein)
+			else:
+				print('\n====================================================================================')
+				print('This is your current search parameters:\n\n1: [Taxon] %-25s [TaxonID] %-10s\n2: [Protein] %s\n3: [Gene name] Unspecified by user' % (idlist[0], idlist[1], protchoice))
+				print('====================================================================================\n')
+####### While true loop acts as an error trap, in case user does not input one of the available options (1 or 2 or 3)
+			while True:
+				tochange = input('\nWhich of the above would you like to change?\nEnter the digit:\n\t1 : To change Taxon,\n\t2 : To change Protein + Gene(optional),\n\t3 : To change Taxon + Protein + Gene(optional).\n').strip()
+####### Checks user input against the earlier created list ['1', '2', '3']. If input is 1, then run the following functions to change the TaxID
+				if tochange == changelist[0]:
+					subprocess.call('rm -fr %s/Assignment2_%s' % (home, moment), shell=True)
+					idlist, home = taxonid()
+					idlist = taxidcheck(idlist)
+					protchoice, protspecieslist, choiceg, df, moment = checkforseq(idlist, protchoice, home)
+					protchoice, idlist, choiceg, df, moment = changetaxprot(idlist, protchoice, choiceg, home, df, moment)
+					return protchoice, idlist, choiceg, df, moment    ###################
+####### Checks user input against the earlier created list ['1', '2', '3']. If input is 2, then run the following functions to change the Protein Name and Gene Name (Optional)
+				elif tochange == changelist[1]:
+					subprocess.call('rm -fr %s/Assignment2_%s' % (home, moment), shell=True)
+					protchoice = proteindataset(idlist)
+					protchoice, protspecieslist, choiceg, df, moment = checkforseq(idlist, protchoice, home)
+					protchoice, idlist, choiceg, df, moment  = changetaxprot(idlist, protchoice, choiceg, home, df, moment)
+					return protchoice, idlist, choiceg, df, moment  ################
+####### Checks user input against the earlier created list ['1', '2', '3']. If input is 3, then run the following functions to change both the TaxID and Protein Name and Gene Name(optional)
+				elif tochange == changelist[2]:
+					subprocess.call('rm -fr %s/Assignment2_%s' % (home, moment), shell=True)
+					idlist, home = taxonid()
+					idlist = taxidcheck(idlist)
+					protchoice  = proteindataset(idlist)
+					protchoice, protspecieslist, choiceg, df, moment = checkforseq(idlist, protchoice, home)
+					protchoice, idlist, choiceg, df, moment = changetaxprot(idlist, protchoice, choiceg, home, df, moment)
+					return protchoice, idlist, choiceg, df, moment   ################
+				else:
+					print('you did not input one of the available option')
+		else:
+			print('you did not input one of the available options, please try again')
+			return protchoice, idlist, choiceg, df, moment
 
 ##################################################################################
 #######  4.0 FUNCTION: X STANDARD DEVIATIONS ABOVE OR BELOW WARNING PROMPT #######
