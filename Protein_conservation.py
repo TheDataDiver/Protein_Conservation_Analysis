@@ -524,6 +524,88 @@ def downloadingfasta (idlist, protchoice, choiceg, home, moment):
 ###################################################################################################################################################################################
 
 def creatingnonredundantfastafiles (df, home, moment):
+####### While true loop acts as an error trap, if user does not enter one of the available options (y or n)
+	while True:
+####### Creates list to check if user input was one of the available options
+		choicelist = ['y', 'n']
+####### Asks for user input, to see if he wants to filter the sequences for redundancy using EMBOSS skipredundant
+		choice = input('Would you like to filter the sequences for redundancy within species?\n\n\t-NCBI is a redundant database, and therefore redundant sequences could be present\n\t-Filtering these sequences will help reduce the bias of the consensus sequence\n\nPlease input y/n:\n').strip().lower()
+		if choice in choicelist:
+			break
+		else:
+			print('You did not input a valid option, please try again')
+####### Creates lists of species TAXID and accession numbers from the updated dataframe
+	protspeciesl = df['Species TaxID'].tolist()
+	accessionl = df['Prot Accession'].tolist()
+####### Creates a dictionary from the two lists, by appending keys and values. If key already exists then it appends the value to they existing key, thus creating a list of accessions if a key (species) has more than one sequence
+	piddic = {}
+	for x in range(0, len(protspeciesl)):
+		i = protspeciesl[x]
+		n = accessionl[x]
+		try:
+			piddic[i] += [n]
+		except:
+			piddic[i] = [n]
+####### if choice is y, that means user wants to skip redundant sequences in his/her dataframe
+	if choice == 'y':
+####### While true again acts as an error trap in case user does not select one of the available options (1 or 2)
+		while True:
+####### Asking user for input, 1 to select 95% threshold for skipping redundancy, 2 for a 100% threshold
+			choices = input('\n\nRedundant sequences will be filtered based on how you define redundancy\n\n\t 1 : 95%\n\t 2 : 100%\n\nPlease input one of the above digits (1 or 2)\n')
+####### Performs skip redundancy at 95% threshold
+			if choices == '1':
+####### Creates new folder for all the fastafiles that are to be generated
+				os.mkdir('%s/Assignment2_%s/fastafiles/species' % (home, moment))
+####### Uses the dictionary that was created in this function, to create files named after the species taxID the writes the accesion numbers (VALUE) from the dictionary to these files
+				for species in piddic.keys():
+					accensions = piddic[species]
+					f = open('%s/Assignment2_%s/fastafiles/species/%s_accession.txt' % (home, moment, species), 'w')
+					for accensions in accensions:
+			        		f.write(accensions + "\n")
+					f.close()
+####### Executes pullseq to pull fasta sequences from the main fasta file, generating fasta files for each species TaxID
+					subprocess.call("/localdisk/data/BPSM/Assignment2/pullseq -i '%s/Assignment2_%s/fastafiles/unfiltered.fasta' -n '%s/Assignment2_%s/fastafiless/species/%s_accession.txt' > '%s/Assignment2_%s/fastafiles/species/%s.fa'" % (home, moment, home, moment, species, home, moment, species), shell=True)
+####### Executes skipredundant on each of these fasta files, and outputs the non-redundant sequences to these files
+					subprocess.call("skipredundant -sequences '%s/Assignment2_%s/fastafiles/species/%s.fa' -threshold 95.0 -auto Y -outseq '%s/Assignment2_%s/fastafiles/species/%s.nr'" % (home, moment, species, home, moment, species), shell=True)
+####### Merges these files into a single fasta file, this is a non-redundant fasta file
+				subprocess.call("find %s/Assignment2_%s/fastafiles/species -name '*.nr' | xargs -I {} cat {} >> %s/Assignment2_%s/fastafiles/filtered.fasta" % (home, moment, home, moment), shell=True)
+				return piddic, choice
+####### Performs skip redundancy at 100% threshold
+			elif choices == '2':
+####### Creates new folder for all the fastafiles that are to be generated
+				os.mkdir('%s/Assignment2_%s/fastafiles/species' % (home, moment))
+####### Uses the dictionary that was created in this function, to create files named after the species taxID the writes the accesion numbers (VALUE) from the dictionary to these files
+				for species in piddic.keys():
+					accensions = piddic[species]
+					f = open('%s/Assignment2_%s/fastafiles/species/%s_accession.txt' % (home, moment, species), 'w')
+					for accensions in accensions:
+       						f.write(accensions + "\n")
+					f.close()
+####### Executes pullseq to pull fasta sequences from the main fasta file, generating fasta files for each species TaxID
+					subprocess.call("/localdisk/data/BPSM/Assignment2/pullseq -i '%s/Assignment2_%s/fastafiles/unfiltered.fasta' -n '%s/Assignment2_%s/fastafiles/species/%s_accession.txt' > '%s/Assignment2_%s/fastafiles/species/%s.fa'" % (home, moment, home, moment, species, home, moment, species), shell=True)
+####### Executes skipredundant on each of these fasta files, and outputs the non-redundant sequences to these files
+					subprocess.call("skipredundant -sequences '%s/Assignment2_%s/fastafiles/species/%s.fa' -threshold 100.0 -auto Y -outseq '%s/Assignment2_%s/fastafiles/species/%s.nr'" % (home, moment, species, home, moment, species), shell=True)
+####### Merges these files into a single fasta file, this is a non-redundant fasta file
+				subprocess.call("find %s/Assignment2_%s/fastafiles/species -name '*.nr' | xargs -I {} cat {} >> %s/Assignment2_%s/fastafiles/filtered.fasta" % (home, moment, home, moment), shell=True)
+				return piddic, choice
+			else:
+				print('you did not input one of the available choices, please try again')
+####### If user selects no, then this occurs
+	else:
+####### Creates new folder for all the fastafiles that are to be generated
+		os.mkdir('%s/Assignment2_%s/fastafiles/species' % (home, moment))
+####### Uses the dictionary that was created in this function, to create files named after the species taxID the writes the accesion numbers (VALUE) from the dictionary to these files
+		for species in piddic.keys():
+			accensions = piddic[species]
+			f = open('%s/Assignment2_%s/fastafiles/species/%s_accession.txt' % (home, moment, species), 'w')
+			for accensions in accensions:
+				f.write(accensions + "\n")
+			f.close()
+####### Executes pullseq to pull fasta sequences from the main fasta file, generating fasta files for each species TaxID
+			subprocess.call("/localdisk/data/BPSM/Assignment2/pullseq -i '%s/Assignment2_%s/fastafiles/unfiltered.fasta' -n '%s/Assignment2_%s/fastafiles/species/%s_accession.txt' > '%s/Assignment2_%s/fastafiles/species/%s.fa'" % (home, moment, home, moment, species, home, moment, species), shell=True)
+####### Merges these files into a single fasta file, this is still a redundant fasta file
+		subprocess.call("find %s/Assignment2_%s/fastafiles/species -name '*.fa' | xargs -I {} cat {} >> %s/Assignment2_%s/fastafiles/filtered.fasta" % (home, moment, home, moment), shell=True)
+	return piddic, choice
 
 
 ###################################################################################################################################################################
