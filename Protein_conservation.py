@@ -507,6 +507,16 @@ def theupdateddataframe (df, idlist, protchoice, home, moment):
 ###########################################################
 
 def downloadingfasta (idlist, protchoice, choiceg, home, moment):
+####### Creates a subfolder within main output folder, this is where the main fastafile will be stored
+	os.mkdir('%s/Assignment2_%s/fastafiles' % (home, moment))
+	print('\n\nFasta sequences are now being downloaded, please be patient')
+####### If the user had chose to use the gene name parameter in esearch, then fastafiles will be downloaded with the following parameters
+	if choiceg:
+		subprocess.call("esearch -db protein -query 'txid%s[Organism:exp] AND %s AND %s[Gene Name] NOT PARTIAL' | efetch -format fasta > %s/Assignment2_%s/fastafiles/unfiltered.fasta" % (idlist[1], protchoice, choiceg, home, moment), shell=True)
+####### If not, fastafiles will be downloaded as follows
+	else:
+		subprocess.call("esearch -db protein -query 'txid%s[Organism:exp] AND %s NOT PARTIAL' | efetch -format fasta > %s/Assignment2_%s/fastafiles/unfiltered.fasta" % (idlist[1], protchoice, home, moment), shell=True)
+####### Downloading fasta sequences now helps save time, as user will not have to redownload fasta sequences each time he changes his search parameters
 
 
 ###################################################################################################################################################################################
