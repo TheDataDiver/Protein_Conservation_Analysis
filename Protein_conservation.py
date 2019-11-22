@@ -13,7 +13,46 @@ import time
 #################################################
 
 def taxonid ():
-
+####### Getting the user's home directory path, saving it to the variable 'home'
+    home = expanduser("~")
+    choice = input('\nPlease specify the taxonomic group\n').strip().lower()
+    print('\n')
+####### Creation of alphabetical and numerical lists, to check against the user input (to ensure he/she input just taxon name, or taxonID, not both)
+    numreflist = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    abcreflist = list(string.ascii_lowercase)
+    checkabc = any(ele in choice for ele in abcreflist)
+    check123 = any(ele in choice for ele in numreflist)
+####### Checks if user input was alphabetical, it will perform esearch using the Taxon name
+    if checkabc == True and check123 == False:
+        print('\n====================================================================================')
+        print('esearch results are as follows:\n')
+####### Displays esearch results in genebank format
+        subprocess.call("esearch -db taxonomy -query %s | efetch -format Gb" % (choice), shell=True)
+        print('====================================================================================\n')
+        outp = subprocess.check_output("esearch -db taxonomy -query %s | efetch -format xml | xtract -pattern Taxon -element ScientificName -element TaxId" % (choice), shell=True)
+        outputdec = outp.decode("utf-8").strip()
+####### Creates a list from the esearch result, containing the taxon and taxonIDs
+        taxonidlist = re.split(r"[\t\n]", outputdec)
+####### Checks if user input was numerical, it will perform the esearch using the taxon id, with the [UID] parameter
+    elif checkabc == False and check123 == True:
+        print('\n====================================================================================')
+        print('esearch results are as follows:\n')
+####### Displays esearch results in genebank format
+        subprocess.call("esearch -db taxonomy -query %s[UID] | efetch -format Gb" % (choice), shell=True)
+        print('\n====================================================================================')
+        outp = subprocess.check_output("esearch -db taxonomy -query %s[UID] | efetch -format xml | xtract -pattern Taxon -element ScientificName -element TaxId" % (choice), shell=True)
+        outputdec = outp.decode("utf-8").strip()
+####### Creates a list from the esearch result, containing the taxons and taxonIDs
+        taxonidlist = re.split(r"[\t\n]", outputdec)
+####### Checks if user input was alphanumerical, it won't perform the esearch, returns to initial step, as either the taxonID or Taxon name should be input, not both
+    else:
+        print('\nInput requires only taxonID or taxonomy, not a mix between both (eg. Either "8782" or "aves")')
+        taxonidlist = taxonid()
+####### Checking if the esearch had any valid output, if the taxon esearch had 0 results, it will loop back the start of the function
+    if len(taxonidlist) == 1:
+        print('\nThe esearch for %s taxonomy returned 0 results, the input was probably invalid, we shall return to the initial step' % (choice))
+        taxonidlist = taxonid()
+    return taxonidlist, home
 
 #####################################################################################
 #######  1.1 FUNCTION: CHECKING TO SEE IF TAXONID ESEARCH GAVE MULTIPLE HITS  #######
@@ -97,6 +136,7 @@ def creatingnonredundantfastafiles (df, home, moment):
 ###################################################################################################################################################################
 
 def nonredundantcheckforseq (idlist, protchoice, choiceg, home, moment):
+
 
 
 ###############################################################################################
