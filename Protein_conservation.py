@@ -613,7 +613,70 @@ def creatingnonredundantfastafiles (df, home, moment):
 ###################################################################################################################################################################
 
 def nonredundantcheckforseq (idlist, protchoice, choiceg, home, moment):
-
+####### Opens the filtered.fasta file [most up to data fasta, be it redundant or not], and uses regular expression to find the species names, and saves them to a list
+	with open('%s/Assignment2_%s/fastafiles/filtered.fasta' % (home, moment), 'r') as f:
+		filer = f.read().strip()
+		protspeciesnum = re.findall(r'\[(.*?)]', filer)
+		f.close()
+####### gets the total number of sequences and unique species from the above created list
+	totalseq = len(protspeciesnum)
+	uniquespec = len(set(protspeciesnum))
+####### prints the summary of taxon, protein family, total sequences and number of species
+	print('\n====================================================================================')
+	print('Esearch Results have been filtered\n\t-Results below are non-redundant:\n\nTaxon          :   %s\nProtein Family :   %s\nTotal sequences:   %s\nNo. of Species :   %s' % (idlist[0], protchoice, totalseq, uniquespec))
+	print('\n------------------------------------------------------------------------------------')
+####### creates a dictionary with species (KEY) : sequence counts (VALUES)
+	numberoffasta = dict((x, protspeciesnum.count(x)) for x in set(protspeciesnum))
+	print('The top 3 most represented species are as follows:\n')
+	highestcountkey = sorted(numberoffasta, key=numberoffasta.get, reverse=True)[:3]
+	highestcountvalue = []
+	for elem in highestcountkey:
+		va = numberoffasta.get(elem)
+		highestcountvalue.append(va)
+####### Prints the top 3 most represented species
+	print('\nSpecies: %-40s Sequences: %s\nSpecies: %-40s Sequences: %s\nSpecies: %-40s Sequences: %s\n' % (highestcountkey[0], highestcountvalue[0], highestcountkey[1], highestcountvalue[1], highestcountkey[2], highestcountvalue[2]))
+	print('\n====================================================================================')
+	viewful = input('\nWould you like to view the full list of species and their respective number of FASTA sequences? y/n\n')
+####### if user decides to view entire list of species and their sequence counts, then dictionary is used to print key and value
+	if viewful == 'y':
+		for key, value in numberoffasta.items():
+			print('Species: %-40s' 'Number of FASTA sequences: %s' %(key, numberoffasta[key]))
+		print('\n====================================================================================\n')
+####### While true loop again acts as an error trap if user does not input one of the available options (y, n)
+	while True:
+		choice2 = 0
+####### Asking the user to input his choice if he wants to perform the conservation analysis based on the above listed sumamry of his current dataframe
+		choice = input('\nWould you like to perform the conservation analysis on the above listed data? y/n\n').strip().lower()
+####### if yes, then function ends here, returning his choice and totalseq
+		if choice == 'y':
+			return choice2, totalseq
+####### If answer is no, then...
+		elif choice == 'n':
+####### Asking user to chose if he wants to 1-change taxon + protein, 2-revert to dataset prior to filtering for redundancies, 3- revert to dataset prior to removal of sequences x standard deviations above/below the mean
+			choice2 = input('Which dataset would you like to revert to?\n\t1 : Start again, change TaxID and Protein\n\t2 : Revert to dataset prior to filtering for redundancy\n\t 3 : Revert to dataset before removal of sequences x standarded deviations above/below mean\nPlease input one of the digits above\n')
+####### Change the taxon and protein
+			if choice2 == '1':
+####### deletes the main output directory, as we shall have to start fresh
+				subprocess.call("rm -fr %s/Assignment2_%s" % (home, moment), shell=True)
+				print('Lets start fresh, here we go again')
+				return choice2, totalseq
+####### Revert to the dataset prior to filtering for redundancies
+			elif choice2 == '2':
+####### Deletes only the fastafiles subfolder, as fastafiles will be downloaded again
+				subprocess.call("rm -fr %s/Assignment2_%s/fastafiles" % (home, moment), shell=True)
+				print('Now reverting to dataset prior to filtering for redundancies')
+				return choice2, totalseq
+####### Reverting to dataset prior to removal of sequences x standard deviations above/below the mean
+			elif choice2 == '3':
+####### Deletes only the fastafiles subfolder, as fastafiles will be downloaded again based on his dataframe
+				subprocess.call("rm -fr %s/Assignment2_%s/fastafiles" % (home, moment), shell=True)
+				print('Now reverting to dataset prior to removal of sequences x standard deviations above/below the mean')
+				return choice2, totalseq
+			else:
+				print('Your input was invalid, lets try again')
+		else:
+			print('You input was invalid, lets try again')
+			return choice2, totalseq
 
 
 ###############################################################################################
