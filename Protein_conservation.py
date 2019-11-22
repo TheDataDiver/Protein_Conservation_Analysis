@@ -320,6 +320,63 @@ def xstandarddeviationwarning (df):
 ##################################################################################################
 
 def xstandarddeviationabove (df, min, max, mean, std):
+####### While true loop acts as an error trap, in case the user does not input one of the available options for removing sequences >1 standard deviations above/below the mean
+	while True:
+####### If maximum protein length is greater than 1 standard deviation over the mean, then...
+		if max > (mean + std):
+			print('WARNING: ||ABOVE THE MEAN|| Maximum length sequence is > 1 standard deviations above the mean\n')
+####### Printing the options that the user has
+			print('Your options are as follows for sequences |||ABOVE THE MEAN|||:')
+			print('\n\t-Choice-\t-Action-')
+			print('\t0\t:\t[DO NOT REMOVE]    any sequences')
+			stdacheck = mean
+			n = 1
+####### This while loop searches the dataframe for sequences x standard deviations above the mean, increasing the number of standard deviations each time it loops. Till it reaches 5 standard deviations or finds 0 sequences
+			while stdacheck < max and n <= 5:
+				stdacheck = mean + std*n
+				stda = df[df.apply( lambda x : x['Prot Length'] > (mean + std*n), axis=1 )].shape[0]
+				if stda == 0:
+					break
+				print('\t%s\t:\t[REMOVE SEQUENCES] %s Sequences     that are     %s Standard Deviations above the Mean' % (n, stda, n))
+				totala = n
+				n += 1
+####### Based on the above information, user is asked to input a digit for his choice
+			choice = input('\nBased on the above information, please input a digit for your choice\n').strip()
+####### Creates a list of options available to the user
+			a = range(0, totala + 1)
+			stdalist = list(map(str, a))
+####### Checks if user input was one of the available options, by referencing the list that was created
+			check = any(ele in choice for ele in stdalist)
+			if check == True:
+####### Choice 0 means that the user does not want to remove any sequences, thus it ends the function here, returning the new dataframe
+				if choice == '0':
+					print('\n==============================================================================================================================================')
+					return df
+####### Any other digit signifies x standard deviations above the mean
+				else:
+####### Turns the user input into int, so that calculations can be made with it
+					choice = int(choice)
+####### Finds the sequences to be removed and saves it as a new dataframe, and resets the index
+					toberemoved = df[df.apply( lambda x : x['Prot Length'] > (mean + std*choice), axis=1 )]
+					toberemoved1 = toberemoved.reset_index(drop=True, inplace=True)
+####### Removes the selected sequences from the dataframe, saving it to a new dataframe
+					ndf = df[~df.apply( lambda x : x['Prot Length'] > (mean + std*choice), axis=1 )]
+					print('\n\n')
+####### Prints the dataframe of sequences to be removed, and asks the user if he is sure that he wants to remove these sequences
+					print(toberemoved)
+					choices = input('\nThe above sequences will be removed. Would you like to continue? y/n\n').strip().lower()
+####### If answer is y, then ends the function and saves the dataframe with sequences removed
+					if choices == 'y':
+						print('\n==============================================================================================================================================')
+						return ndf
+####### If answer is n, then returns back to the start of the function
+					elif choices == 'n':
+						print('\nLets go back to selecting which sequences are to be removed\n')
+					else:
+						print('Your input was invalid, please input one of the available options')
+			else:
+				print('\n----------------------------------------------------------------------------------------------------------------------------------------------')
+				print('\nYour input was invalid, we shall try again\n')
 
 
 ##################################################################################################
