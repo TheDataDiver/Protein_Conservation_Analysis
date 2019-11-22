@@ -124,6 +124,106 @@ def creatinglistfromesearch (home, moment):
 ####################################################################
 
 def checkforseq (idlist, protchoice, home):
+	choiceg = ""
+	print('\n====================================================================================')
+	print('Would you like to:\n\n1. eSearch with:\n\t"TaxonID: %s"\n\t"Protein name: %s"\n\nWARNING: This will perform an extensive search, but conservation plot would not be as biologically significant\n\n\n2. eSearch with:\n\t"TaxonID: %s"\n\t"Protein name: %s"\n\t"Gene name: to be specified"\n\nWARNING: This would produce a biologically significant conservation plot, however less species would be covered due to poor maintenance of NCBI gene name database' % (idlist[1], protchoice, idlist[1], protchoice))
+	print('====================================================================================\n')
+####### While True loop here as an error trap, in case user does not input one of the available options (1/2)
+	while True:
+		choice = input('Please type 1 or 2\n').strip()
+####### ESEARCH WITH TAXID + PROTEIN + GENE NAME
+		if choice == '2':
+####### Getting the current hour and minute, then creating a folder using the current hour and minute.
+			moment = time.strftime("%H_%M",time.localtime())
+			os.mkdir('%s/Assignment2_%s' % (home, moment))
+			choiceg = input('\nPlease input the gene name\n').strip()
+####### executing the esearch
+			subprocess.call("esearch -db protein -query 'txid%s[Organism:exp] AND %s AND %s[Gene Name] NOT PARTIAL' | efetch -format docsum > %s/Assignment2_%s/docsum.txt" % (idlist[1], protchoice, choiceg, home, moment), shell=True)
+####### Running function 3.0, which will generate all the lists required to create the panda dataframe from the esearch result
+			protspecieslist, protspeciestaxidlist, protspeciesaccessionlist, protlengthlistint = creatinglistfromesearch(home, moment)
+			break
+####### ESEARCH WITH TAXID + PROT
+		elif choice =='1':
+####### Getting the current hour and minute, then creating a folder using the current hour and minute.
+			moment = time.strftime("%H_%M",time.localtime())
+			os.mkdir('%s/Assignment2_%s' % (home, moment))
+####### executing the esearch
+			subprocess.call("esearch -db protein -query 'txid%s[Organism:exp] AND %s NOT PARTIAL' | efetch -format docsum > %s/Assignment2_%s/docsum.txt" % (idlist[1], protchoice, home, moment), shell=True)
+####### Running function 3.0, which will generate all the lists required to create the panda dataframe from the esearch result
+			protspecieslist, protspeciestaxidlist, protspeciesaccessionlist, protlengthlistint = creatinglistfromesearch(home, moment)
+			break
+		else:
+			print('Your input was invalid, please input one of the available choices')
+####### Creating the panda Dataframe, using the above generated lists
+	s1 = pd.Series(protspecieslist)
+	s2 = pd.Series(protspeciestaxidlist)
+	s3 = pd.Series(protspeciesaccessionlist)
+	s4 = pd.Series(protlengthlistint)
+####### Dataframe columns are as follows: Species Name, Species TaxID, Protein Accession, Protein length
+	df = pd.DataFrame({'Species Name' : s1, 'Species TaxID' : s2, 'Prot Accession' : s3, 'Prot Length' : s4})
+####### Getting the total number of sequences that were found, by using the first index of the df.shape
+	totalseq = df.shape[0]
+####### Getting the total number of unique species
+	uniquespecies = len(df.drop_duplicates('Species Name'))
+####### IF TOTAL NUMBER OF SEQUENCES FOUND IN ESEARCH IS < 10
+	if totalseq < 10:
+		print('The esearch found less than 10 total sequences')
+		print('\n====================================================================================')
+		print('WARNING: Esearch returned with less than 10 unique sequences:\n\nTaxon          :   %s\nProtein Family :   %s\nTotal sequences:   %s\nNo. of Species :   %s' % (idlist[0], protchoice, totalseq, uniquespecies))
+		print('\n------------------------------------------------------------------------------------')
+####### Creating a list of species names from the panda dataframe
+		protspeciesl = df['Species Name'].tolist()
+####### Creating a dictionary of Species (KEY) : Sequence counts (VALUE)
+		numberoffasta = dict((x, protspeciesl.count(x)) for x in set(protspeciesl))
+		print('The number of FASTA sequences per species are as follows:\n')
+####### Prints all the unique species and their respective sequence counts
+		for key, value in numberoffasta.items():
+			print('Species: %-40s' 'Number of FASTA sequences: %s' %(key, numberoffasta[key]))
+		print('\n------------------------------------------------------------------------------------\n')
+		print('WARNING: The results above contains redundant sequences.\nWARNING: To improve the speed of the script, FASTA sequences will only be downloaded later, and redundant sequences removed.\nWARNING: We shall perform a further check later')
+		print('====================================================================================\n')
+		return protchoice, protspeciesl, choiceg, df, moment
+####### IF TOTAL NUMBER OF UNIQUE SPECIES FOUND IN ESEARCH IS < 5
+	if uniquespecies < 5:
+		print('\n====================================================================================')
+		print('WARNING: Esearch returned less than 5 unique species:\n\nTaxon          :   %s\nProtein Family :   %s\nTotal sequences:   %s\nNo. of Species :   %s' % (idlist[0], protchoice, totalseq, uniquespecies))
+		print('\n------------------------------------------------------------------------------------')
+####### Creating a list of species names from the panda dataframe
+		protspeciesl = df['Species Name'].tolist()
+####### Creating a dictionary of Species (KEY) : Sequence counts (VALUE)
+		numberoffasta = dict((x, protspeciesl.count(x)) for x in set(protspeciesl))
+		print('The number of FASTA sequences per species are as follows:\n')
+####### Prints all the unique species and their respective sequence counts
+		for key, value in numberoffasta.items():
+		 	print('Species: %-40s' 'Number of FASTA sequences: %s' %(key, numberoffasta[key]))
+		print('\n------------------------------------------------------------------------------------\n')
+		print('WARNING: The results above contains redundant sequences.\nWARNING: To improve the speed of the script, FASTA sequences will only be downloaded later, and redundant sequences removed.\nWARNING: We shall perform a further check later')
+		return protchoice, protspecieslist, choiceg, df, moment
+####### Prints esearch output summary, showing total number of sequences found and number of unique species, as well as remind the user of his Taxon and Protein search input
+	print('\n====================================================================================')
+	print('Esearch Results are as follows:\n\nTaxon          :   %s\nProtein Family :   %s\nTotal sequences:   %s\nNo. of Species :   %s' % (idlist[0], protchoice, totalseq, uniquespecies))
+	print('\n------------------------------------------------------------------------------------')
+####### Creating a list of species names from the panda dataframe
+	protspeciesl = df['Species Name'].tolist()
+####### Creating a dictionary of Species (KEY) : Sequence counts (VALUE)
+	numberoffasta = dict((x, protspecieslist.count(x)) for x in set(protspecieslist))
+####### Printing only the top 3 most represented species for the user to see. This is performed through sorting the dictionary according to highest values first. Then appending the top 3 to a list
+	print('The top 3 most represented species are as follows:\n')
+	highestcountkey = sorted(numberoffasta, key=numberoffasta.get, reverse=True)[:3]
+	highestcountvalue = []
+	for elem in highestcountkey:
+		va = numberoffasta.get(elem)
+		highestcountvalue.append(va)
+	print('\nSpecies: %-40s Sequences: %s\nSpecies: %-40s Sequences: %s\nSpecies: %-40s Sequences: %s\n' % (highestcountkey[0], highestcountvalue[0], highestcountkey[1], highestcountvalue[1], highestcountkey[2], highestcountvalue[2]))
+	print('------------------------------------------------------------------------------------\n')
+	print('WARNING: The results above contains redundant sequences.\nWARNING: To improve the speed of the script, FASTA sequences will only be downloaded later, and redundant sequences removed.\nWARNING: We shall perform a further check later')
+	print('\n====================================================================================\n')
+	viewful = input('\nWould you like to view the full list of species and their respective number of FASTA sequences? y/n\n')
+####### If user would like to see the full list of species and their respective sequence counts, this will print the key of the dictionary (species), followed by the count (value)
+	if viewful == 'y':
+		for key, value in numberoffasta.items():
+			print('Species: %-40s' 'Number of FASTA sequences: %s' %(key, numberoffasta[key]))
+	return protchoice, protspeciesl, choiceg, df, moment
 
 
 #############################################################################
