@@ -449,6 +449,57 @@ def xstandarddeviationbelow (df, min, max, mean, std):
 ###########################################################################################
 
 def theupdateddataframe (df, idlist, protchoice, home, moment):
+####### Gets number of total sequences and unique species from the updated dataframe
+	totalseq = df.shape[0]
+	uniquespecies = len(df.drop_duplicates('Species Name'))
+####### Creates a list of all the species in the updated dataframe
+	listofspecies = df['Species Name'].tolist()
+####### Prints the summary information of the updated dataframe, being the taxon, protein family, total sequences and number of unique species
+	print('\n\n\n====================================================================================')
+	print('Filtered esearch results are as follows:\n\nTaxon          :   %s\nProtein Family :   %s\nTotal sequences:   %s\nNo. of Species :   %s' % (idlist[0], protchoice, totalseq, uniquespecies))
+####### Creates a dictionary with Species (KEY) : Sequence counts (VALUE)
+	numberoffasta = dict((x, listofspecies.count(x)) for x in set(listofspecies))
+	print('\n------------------------------------------------------------------------------------')
+####### Prints top 3 most represented species
+	print('The top 3 most represented species are as follows:\n')
+	highestcountkey = sorted(numberoffasta, key=numberoffasta.get, reverse=True)[:3]
+	highestcountvalue = []
+	for elem in highestcountkey:
+		va = numberoffasta.get(elem)
+		highestcountvalue.append(va)
+	print('\nSpecies: %-40s Sequences: %s\nSpecies: %-40s Sequences: %s\nSpecies: %-40s Sequences: %s\n' % (highestcountkey[0], highestcountvalue[0], highestcountkey[1], highestcountvalue[1], highestcountkey[2], highestcountvalue[1]))
+	print('------------------------------------------------------------------------------------\n')
+	print('WARNING: The results above contains redundant sequences.\nWARNING: To improve the speed of the script, FASTA sequences will only be downloaded later, and redundant sequences removed.')
+	print('\n====================================================================================\n')
+####### If user wants to view the entire list of species and their respective sequence counts, then...
+	viewful = input('\nWould you like to view the full list of species and their respective number of FASTA sequences? y/n\n')
+	if viewful == 'y':
+####### Prints the key and the value of the dictionary in a for loop, printing every line
+		for key, value in numberoffasta.items():
+			print('Species: %-40s' 'Number of FASTA sequences: %s' %(key, numberoffasta[key]))
+			print('\n====================================================================================\n')
+####### If user decides to go ahead with the analysis, then function returns choice2 and moment(the timestamp)
+	choice2 = 'empty'
+	while True:
+		choice = input('\nWould you like to go ahead with the analysis with this data set? y/n\n').strip().lower()
+		if choice == 'y':
+			return choice2, moment
+####### If user decides not to go ahead with the analysis, then...
+		elif choice == 'n':
+			choice2 = input('\n\n\nWhich dataset would you like to revert to?\n\n\t1 : Start again, change TaxID and Protein\n\t2 : Revert to dataset before removal of sequences x standarded deviations above/below mean\n\nPlease input one of the digits above\n').strip()
+####### Choice 1, deletes the main output folder, as we are requiring a fresh shart, and function returns the choice he has made
+			if choice2 == '1':
+				subprocess.call("rm -fr %s/Assignment2_%s" % (home, moment), shell=True)
+				print('Lets start fresh, here we go again')
+				return choice2, moment
+####### Choice 2, no need to delete any folder, as user is just reverting to dataframe which was prior to removing sequences above/below standard deviation
+			elif choice2 == '2':
+				print('Now reverting to dataset prior to removal of sequences x standard deviations above/below the mean')
+				return choice2, moment
+			else:
+				print('Your input was invalid, lets try again')
+		else:
+			print('You input was invalid, lets try again')
 
 
 ###########################################################
